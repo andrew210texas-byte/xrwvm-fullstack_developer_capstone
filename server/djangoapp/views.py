@@ -36,7 +36,6 @@ def logout_request(request):
 
 @csrf_exempt
 def registration(request):
-    context = {}
     data = json.loads(request.body)
     username = data['userName']
     password = data['password']
@@ -44,12 +43,11 @@ def registration(request):
     last_name = data['lastName']
     email = data['email']
     username_exist = False
-    email_exist = False
 
     try:
         User.objects.get(username=username)
         username_exist = True
-    except:
+    except Exception:
         logger.debug("{} is new user".format(username))
 
     if not username_exist:
@@ -63,9 +61,9 @@ def registration(request):
         login(request, user)
         data = {"userName": username, "status": "Authenticated"}
         return JsonResponse(data)
-    else:
-        data = {"userName": username, "error": "Already Registered"}
-        return JsonResponse(data)
+
+    data = {"userName": username, "error": "Already Registered"}
+    return JsonResponse(data)
 
 
 def get_cars(request):
@@ -88,7 +86,7 @@ def get_cars(request):
 
 
 def get_dealerships(request, state="All"):
-    if(state == "All"):
+    if state == "All":
         endpoint = "/fetchDealers"
     else:
         endpoint = "/fetchDealers/" + state
@@ -121,15 +119,15 @@ def get_dealer_reviews(request, dealer_id):
 
 @csrf_exempt
 def add_review(request):
-    if(request.user.is_anonymous == False):
+    if not request.user.is_anonymous:
         data = json.loads(request.body)
         try:
-            response = post_review(data)
+            post_review(data)
             return JsonResponse({"status": 200})
-        except:
+        except Exception:
             return JsonResponse({
                 "status": 401,
                 "message": "Error in posting review"
             })
-    else:
-        return JsonResponse({"status": 403, "message": "Unauthorized"})
+
+    return JsonResponse({"status": 403, "message": "Unauthorized"})
